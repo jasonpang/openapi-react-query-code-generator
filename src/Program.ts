@@ -141,7 +141,6 @@ export async function generateReactQueryHooksFile({
   methods: AnalyzedMethod[];
   outputPath: string;
 }) {
-  console.log("Methods:", methods);
   const project = new Project({
     compilerOptions: {
       target: ScriptTarget.ESNext,
