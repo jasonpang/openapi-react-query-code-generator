@@ -1,5 +1,5 @@
 {
-  "name": "openapi-react-query-code-generator",
+  "name": "@jasonpang/openapi-react-query-code-generator",
   "description": "Uses openapi-typescript-codegen under the hood, and then analyzes the TypeScript AST of the generated files to create TanStack React Query hooks. Supports server-sided rendering w/ NextJS by using client instances of openapi-typescript-codegen.",
   "version": "0.1.0",
   "dependencies": {
@@ -16,9 +16,7 @@
     "dev": "tsc -p tsconfig.json --watch --incremental",
     "build": "tsc -p tsconfig.json",
     "test": "node --enable-source-maps --test --watch dist/src/",
-    "preview": "npm run build && npm -C examples/react-app run generate:api",
-    "prepublishOnly": "npm run build",
-    "release": "npx git-ensure -a && npx bumpp --commit --tag --push"
+    "publish": "npm run build && npx git-ensure -a && npx bumpp --commit --tag --push"
   },
   "devDependencies": {
     "@types/node": "^20.11.5"
