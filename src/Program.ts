@@ -84,6 +84,7 @@ export async function getModelFileNames({
 export interface AnalyzedMethod {
   name: string;
   docs: string;
+  isQuery: boolean;
   params: Array<{ name: string; type: string }>;
 }
 
@@ -111,6 +112,10 @@ export function analyzeOpenapiCodegenFiles({
       .getJsDocs()
       .map((doc) => doc.getText())
       .join("\n"),
+    isQuery: !!method
+      .getBody()
+      ?.getText()
+      .match(/method:.*get/i),
     params: method
       .getParameters()[0]
       .getType()
@@ -126,7 +131,6 @@ export function analyzeOpenapiCodegenFiles({
           ),
         };
       }),
-    typeParams: method.getTypeParameters(),
   })) as AnalyzedMethod[];
 }
 
@@ -137,6 +141,7 @@ export async function generateReactQueryHooksFile({
   methods: AnalyzedMethod[];
   outputPath: string;
 }) {
+  console.log("Methods:", methods);
   const project = new Project({
     compilerOptions: {
       target: ScriptTarget.ESNext,
@@ -171,9 +176,18 @@ import { DefaultService } from "./services/DefaultService";
 
 export const ApiServiceContext = createContext<typeof DefaultService.prototype | null>(null);
 
-${methods
-  .map(
-    (method) => `
+${methods.map((method) => (method.isQuery ? createUseQueryFunction({ method }) : createUseMutationFunction({ method }))).join("\n")}
+      `
+  );
+  await file.save();
+  formatFileWithPrettier(file.getFilePath(), file.getFilePath());
+}
+
+function createUseQueryFunction({ method }: { method: AnalyzedMethod }) {
+  return `
+
+export const QueryKey${capitalizeFirstLetter(method.name)} = '${method.name}';
+
 export const use${capitalizeFirstLetter(method.name)} = <
   TData = Awaited<ReturnType<typeof DefaultService.prototype.${method.name}>>,
   TError = unknown
@@ -185,16 +199,31 @@ export const use${capitalizeFirstLetter(method.name)} = <
 ) => {
   const apiService = useContext(ApiServiceContext) as DefaultService;
   return useQuery<TData, TError>({
-  queryKey: ['${method.name}', params],
+  queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params],
   queryFn: () =>
     apiService.${method.name}(params) as TData,
   ...queryOptions,
 })};
-`
-  )
-  .join("\n")}
-      `
-  );
-  await file.save();
-  formatFileWithPrettier(file.getFilePath(), file.getFilePath());
+`;
+}
+
+function createUseMutationFunction({ method }: { method: AnalyzedMethod }) {
+  const paramType = `{ ${method.params.map((param) => `${param.name}: ${param.type};`).join("\n    ")} }`;
+  return `
+export const use${capitalizeFirstLetter(method.name)} = <
+  TData = Awaited<ReturnType<typeof DefaultService.prototype.${method.name}>>,
+  TError = unknown,
+  TContext = unknown
+>(
+  mutationOptions?: UseMutationOptions<TData, TError, ${paramType}, TContext>
+) => {
+  const apiService = useContext(ApiServiceContext) as DefaultService;
+  return useMutation<TData, TError, ${paramType}, TContext>({
+    mutationFn: (
+      params: ${paramType}
+    ) =>
+      apiService.${method.name}(params) as Promise<TData>,
+    ...mutationOptions,
+})};
+`;
 }
