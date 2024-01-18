@@ -3,7 +3,6 @@ import { Command } from "commander";
 import packageJson from "../package.json";
 import { Options } from "openapi-typescript-codegen";
 import {
-  Program,
   analyzeOpenapiCodegenFiles,
   createOpenapiTypescriptCodegenFiles,
   generateReactQueryHooksFile,
