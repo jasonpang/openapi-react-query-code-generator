@@ -1,7 +1,7 @@
 {
   "name": "@jsonpang/openapi-react-query-code-generator",
   "description": "Uses openapi-typescript-codegen under the hood, and then analyzes the TypeScript AST of the generated files to create TanStack React Query hooks. Supports server-sided rendering w/ NextJS by using client instances of openapi-typescript-codegen.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "dependencies": {
     "@tanstack/react-query": "^5.17.15",
     "commander": "^11.1.0",
