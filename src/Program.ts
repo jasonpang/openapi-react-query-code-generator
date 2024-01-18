@@ -221,7 +221,7 @@ export const use${capitalizeFirstLetter(method.name)} = <
     mutationFn: (
       params: ${paramType}
     ) =>
-      apiService.${method.name}(params) as Promise<TData>,
+      apiService.${method.name}(params) as unknown as Promise<TData>,
     ...mutationOptions,
 })};
 `;
