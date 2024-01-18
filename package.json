@@ -17,7 +17,7 @@
     "dev": "tsc -p tsconfig.json --watch --incremental",
     "build": "tsc -p tsconfig.json",
     "test": "node --enable-source-maps --test --watch dist/src/",
-    "publish": "npm run build && npx git-ensure -a && npx bumpp --commit --tag --push"
+    "release": "npm run build && npx git-ensure -a && npx bumpp --commit --tag --push"
   },
   "devDependencies": {
     "@types/node": "^20.11.5"

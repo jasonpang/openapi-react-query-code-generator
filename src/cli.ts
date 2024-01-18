@@ -36,7 +36,7 @@ program
     "A path, URL or string OpenAPI schema."
   )
   .option(
-    "-o, --output-dir <value>",
+    "-o, --output <value>",
     "The output directory where files will be generated. For the path provided, additional subdirectories will be created to store generated files.",
     "openapi"
   )
