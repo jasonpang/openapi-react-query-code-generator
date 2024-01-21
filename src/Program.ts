@@ -161,7 +161,7 @@ export async function generateReactQueryHooksFile({
   file.insertText(
     file.getPos(),
     `
-import { createContext, useContext } from "react";
+import { createContext, useContext, useCallback } from "react";
 import {
   UseMutationOptions,
   UseMutationResult,
@@ -187,9 +187,9 @@ function createUseQueryFunction({ method }: { method: AnalyzedMethod }) {
   return `
 
 export const QueryKey${capitalizeFirstLetter(method.name)} = '${method.name}';
-export const useInvalidateQuery${capitalizeFirstLetter(method.name)} = async (params: { ${method.params.map((param) => `${param.name}?: ${param.type};`).join("\n    ")} }) => {
+export const useInvalidateQuery${capitalizeFirstLetter(method.name)} = () => {
   const queryClient = useQueryClient();
-  const invalidateQuery = useCallback(() => queryClient.invalidateQueries({ queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params] }), [queryClient]);
+  const invalidateQuery = useCallback((params: { ${method.params.map((param) => `${param.name}?: ${param.type};`).join("\n    ")} }) => queryClient.invalidateQueries({ queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params] }), [queryClient]);
   return { invalidateQuery${capitalizeFirstLetter(method.name)}: invalidateQuery };
 };
 export const use${capitalizeFirstLetter(method.name)} = <
