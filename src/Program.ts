@@ -169,6 +169,7 @@ import {
   UseQueryResult,
   useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 ${modelsFileNames.map((fileName) => `import { ${fileName} } from "./models/${fileName}";`).join("\n")}
 import { DefaultService } from "./services/DefaultService";
@@ -186,7 +187,10 @@ function createUseQueryFunction({ method }: { method: AnalyzedMethod }) {
   return `
 
 export const QueryKey${capitalizeFirstLetter(method.name)} = '${method.name}';
-
+export const invalidateQuery${capitalizeFirstLetter(method.name)} = async (params: { ${method.params.map((param) => `${param.name}?: ${param.type};`).join("\n    ")} }) => {
+  const queryClient = useQueryClient();
+  return queryClient.invalidateQueries({ queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params] });
+};
 export const use${capitalizeFirstLetter(method.name)} = <
   TData = Awaited<ReturnType<typeof DefaultService.prototype.${method.name}>>,
   TError = unknown
