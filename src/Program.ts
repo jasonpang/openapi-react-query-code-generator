@@ -187,9 +187,10 @@ function createUseQueryFunction({ method }: { method: AnalyzedMethod }) {
   return `
 
 export const QueryKey${capitalizeFirstLetter(method.name)} = '${method.name}';
-export const invalidateQuery${capitalizeFirstLetter(method.name)} = async (params: { ${method.params.map((param) => `${param.name}?: ${param.type};`).join("\n    ")} }) => {
+export const useInvalidateQuery${capitalizeFirstLetter(method.name)} = async (params: { ${method.params.map((param) => `${param.name}?: ${param.type};`).join("\n    ")} }) => {
   const queryClient = useQueryClient();
-  return queryClient.invalidateQueries({ queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params] });
+  const invalidateQuery = useCallback(() => queryClient.invalidateQueries({ queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params] }), [queryClient]);
+  return { invalidateQuery${capitalizeFirstLetter(method.name)}: invalidateQuery };
 };
 export const use${capitalizeFirstLetter(method.name)} = <
   TData = Awaited<ReturnType<typeof DefaultService.prototype.${method.name}>>,
