@@ -177,7 +177,27 @@ import { DefaultService } from "./services/DefaultService";
 export const ApiServiceContext = createContext<typeof DefaultService.prototype | null>(null);
 
 ${methods.map((method) => (method.isQuery ? createUseQueryFunction({ method }) : createUseMutationFunction({ method }))).join("\n")}
+
+export const useInvalidateQueries = () => {
+  const queryClient = useQueryClient();
+
+  ${methods
+    .filter((method) => method.isQuery)
+    .map(
+      (method) => `
+  const invalidateQuery${capitalizeFirstLetter(method.name)} = useCallback(
+    (params: { ${method.params.map((param) => `${param.name}?: ${param.type};`).join("\n    ")} }) => 
+      queryClient.invalidateQueries({ queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params] }), [queryClient]);
       `
+    )
+    .join("\n")}
+
+  return { ${methods
+    .filter((method) => method.isQuery)
+    .map((method) => `invalidateQuery${capitalizeFirstLetter(method.name)}`)
+    .join(", ")} }
+};
+  `
   );
   await file.save();
   formatFileWithPrettier(file.getFilePath(), file.getFilePath());
@@ -187,11 +207,7 @@ function createUseQueryFunction({ method }: { method: AnalyzedMethod }) {
   return `
 
 export const QueryKey${capitalizeFirstLetter(method.name)} = '${method.name}';
-export const useInvalidateQuery${capitalizeFirstLetter(method.name)} = () => {
-  const queryClient = useQueryClient();
-  const invalidateQuery = useCallback((params: { ${method.params.map((param) => `${param.name}?: ${param.type};`).join("\n    ")} }) => queryClient.invalidateQueries({ queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params] }), [queryClient]);
-  return { invalidateQuery${capitalizeFirstLetter(method.name)}: invalidateQuery };
-};
+
 export const use${capitalizeFirstLetter(method.name)} = <
   TData = Awaited<ReturnType<typeof DefaultService.prototype.${method.name}>>,
   TError = unknown
@@ -208,12 +224,14 @@ export const use${capitalizeFirstLetter(method.name)} = <
     apiService.${method.name}(params) as TData,
   ...queryOptions,
 })};
+
 `;
 }
 
 function createUseMutationFunction({ method }: { method: AnalyzedMethod }) {
   const paramType = `{ ${method.params.map((param) => `${param.name}: ${param.type};`).join("\n    ")} }`;
   return `
+
 export const use${capitalizeFirstLetter(method.name)} = <
   TData = Awaited<ReturnType<typeof DefaultService.prototype.${method.name}>>,
   TError = unknown,
@@ -229,5 +247,6 @@ export const use${capitalizeFirstLetter(method.name)} = <
       apiService.${method.name}(params) as unknown as Promise<TData>,
     ...mutationOptions,
 })};
+
 `;
 }
