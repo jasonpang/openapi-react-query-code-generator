@@ -106,32 +106,36 @@ export function analyzeOpenapiCodegenFiles({
 
   const klass = file.getClassOrThrow("DefaultService");
 
-  return klass.getInstanceMethods().map((method) => ({
-    name: method.getName(),
-    docs: method
-      .getJsDocs()
-      .map((doc) => doc.getText())
-      .join("\n"),
-    isQuery: !!method
-      .getBody()
-      ?.getText()
-      .match(/method:.*get/i),
-    params: method
-      .getParameters()[0]
-      .getType()
-      .getProperties()
-      .map((p) => {
-        const type = p.getTypeAtLocation(file);
-        return {
-          name: p.getName(),
-          type: type.getText(
-            method.getParameters()[0],
-            TypeFormatFlags.NoTruncation |
-              TypeFormatFlags.WriteArrayAsGenericType
-          ),
-        };
-      }),
-  })) as AnalyzedMethod[];
+  return klass.getInstanceMethods().map((method) => {
+    return {
+      name: method.getName(),
+      docs: method
+        .getJsDocs()
+        .map((doc) => doc.getText())
+        .join("\n"),
+      isQuery: !!method
+        .getBody()
+        ?.getText()
+        .match(/method:.*get/i),
+      params: method.getParameters().length
+        ? method
+            .getParameters()[0]
+            .getType()
+            .getProperties()
+            .map((p) => {
+              const type = p.getTypeAtLocation(file);
+              return {
+                name: p.getName(),
+                type: type.getText(
+                  method.getParameters()[0],
+                  TypeFormatFlags.NoTruncation |
+                    TypeFormatFlags.WriteArrayAsGenericType
+                ),
+              };
+            })
+        : [],
+    };
+  }) as AnalyzedMethod[];
 }
 
 export async function generateReactQueryHooksFile({
