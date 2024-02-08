@@ -85,7 +85,7 @@ export interface AnalyzedMethod {
   name: string;
   docs: string;
   isQuery: boolean;
-  params: Array<{ name: string; type: string }>;
+  params: Array<{ name: string; type: string; isOptional: boolean }>;
 }
 
 export function analyzeOpenapiCodegenFiles({
@@ -126,6 +126,7 @@ export function analyzeOpenapiCodegenFiles({
               const type = p.getTypeAtLocation(file);
               return {
                 name: p.getName(),
+                isOptional: p.isOptional(),
                 type: type.getText(
                   method.getParameters()[0],
                   TypeFormatFlags.NoTruncation |
@@ -217,16 +218,16 @@ export const use${capitalizeFirstLetter(method.name)} = <
   TError = unknown
 >(
   params: {
-    ${method.params.map((param) => `${param.name}: ${param.type};`).join("\n    ")}
+    ${method.params.map((param) => `${param.name}${param.isOptional ? "?" : ""}: ${param.type};`).join("\n    ")}
   },
-  queryOptions?: UseQueryOptions<TData, TError>
+  queryOptions?: Omit<UseQueryOptions<TData, TError>, "queryKey" | "queryFn">
 ) => {
   const apiService = useContext(ApiServiceContext) as DefaultService;
   return useQuery<TData, TError>({
-  queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params],
-  queryFn: () =>
-    apiService.${method.name}(params) as TData,
-  ...queryOptions,
+    queryKey: [QueryKey${capitalizeFirstLetter(method.name)}, params],
+    queryFn: () =>
+      apiService.${method.name}(params) as TData,
+    ...queryOptions,
 })};
 
 `;
@@ -241,7 +242,7 @@ export const use${capitalizeFirstLetter(method.name)} = <
   TError = unknown,
   TContext = unknown
 >(
-  mutationOptions?: UseMutationOptions<TData, TError, ${paramType}, TContext>
+  mutationOptions?: Omit<UseMutationOptions<TData, TError, ${paramType}, TContext>, "mutationFn">
 ) => {
   const apiService = useContext(ApiServiceContext) as DefaultService;
   return useMutation<TData, TError, ${paramType}, TContext>({
